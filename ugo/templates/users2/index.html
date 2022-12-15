@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+
+{% block title %} Lista de Usuarios {% endblock %}
+
+{% block content %}
+
+{% load static %}
+
+<div class="card">
+    <div class="card-header">
+        <a name="" id="" class="btn btn-primary" href="{% url 'create' %}" role="button">Agregar</a>
+        <button class="btn btn-success" type="button" data-bs-toggle="modal"
+            data-bs-target="#exampleModalLg">Importar</button>
+    </div>
+    <div class="card-body">
+        <h4 class="card-title">Usuarios</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Nombres</th>
+                    <th>Apellido Paterno</th>
+                    <th>Apellido Materno</th>
+                    <th>Email</th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in object_list %}
+                <tr>
+                    <td>{{ user.nombres }}</td>
+                    <td>{{ user.apellido_paterno }}</td>
+                    <td>{{ user.apellido_materno }}</td>
+                    <td>{{ user.email }}</td>
+                    <td>
+                        <a name="" id="" class="btn btn-warning" href="{% url 'edit' user.id %}"
+                            role="button">Editar</a>
+                        |
+                        <a name="" id="" class="btn btn-danger" href="{% url 'delete' user.id %}"
+                            role="button">Borrar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModalLg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar Usuarios</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="{% url 'import' %}">
+                    {% csrf_token %}
+                    <input type="file" name="xlsUser">
+                    <br><br>
+                    <input name="" id="" class="btn btn-success" type="submit" value="Cargar">
+                </form>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary" type="button"
+                    data-bs-dismiss="modal">Cerrar</button></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

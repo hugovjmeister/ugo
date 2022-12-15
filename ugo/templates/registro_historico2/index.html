@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+
+{% block title %} Registro Histórico {% endblock %}
+
+{% block content %}
+
+{% load static %}
+
+<div class="card">
+    <div class="card-header">
+        <button class="btn btn-success" type="button" data-bs-toggle="modal"
+            data-bs-target="#exampleModalLg">Importar</button>
+    </div>
+    <div class="card-body">
+        {% for message in messages %}
+        <div class="alert alert-danger" role="alert">
+            {{ message }}
+        </div>
+        {% endfor %}
+        <h4 class="card-title">Registro Histórico</h4>
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>Año</th>
+                    <th>Periodo</th>
+                    <th>Curso/Habilitación</th>
+                    <th>Sigla</th>
+                    <th>Modalidad</th>
+                    <th>Sección</th>
+                    <th>Escuela/Prog./Dpto.</th>
+                    <th>Estado</th>
+                    <th>U. Solicitante</th>
+                    <th>Rut</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in object_list %}
+                <tr>
+                    <td>{{ registro.anio }}</td>
+                    <td>{{ registro.periodo }}</td>
+                    <td>{{ registro.curso_habilitacion }}</td>
+                    <td>{{ registro.sigla }}</td>
+                    <td>{{ registro.modalidad }}</td>
+                    <td>{{ registro.seccion }}</td>
+                    <td>{{ registro.escuela_programa_departamento }}</td>
+                    <td>{{ registro.estado }}</td>
+                    <td>{{ registro.unidad_solicitante }}</td>
+                    <td>{{ registro.usuario.rut }}</td>
+                    <td>
+                        <a name="" id="" class="btn btn-danger" href="{% url 'deleteHistorico' registro.id %}"
+                            role="button">Borrar</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModalLg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar Registro Histórico</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="{% url 'historicoImport' %}">
+                    {% csrf_token %}
+                    <input type="file" name="xlsHistorico">
+                    <br><br>
+                    <input name="" id="" class="btn btn-success" type="submit" value="Cargar">
+                </form>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary" type="button"
+                    data-bs-dismiss="modal">Cerrar</button></div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

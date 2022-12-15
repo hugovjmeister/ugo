@@ -1,0 +1,153 @@
+
+{% extends "base.html" %}
+
+{% block title %} Registro Histórico {% endblock %}
+
+<script>
+{% block jquery %}
+    $(document).ready(function () {
+        var table = $('#tblRegistroHistorico').DataTable({
+            language: {
+                "decimal": "",
+                "emptyTable": "No hay información",
+                "info": "Mostrando _START_ a _END_ de _TOTAL_ Entradas",
+                "infoEmpty": "Mostrando 0 to 0 of 0 Entradas",
+                "infoFiltered": "(Filtrado de _MAX_ total entradas)",
+                "infoPostFix": "",
+                "thousands": ",",
+                "lengthMenu": "Mostrar _MENU_ Entradas",
+                "loadingRecords": "Cargando...",
+                "processing": "Procesando...",
+                "search": "",
+                "searchPlaceholder": "Buscar...",
+                "zeroRecords": "Sin resultados encontrados",
+                "paginate": {
+                    "first": "Primero",
+                    "last": "Ultimo",
+                    "next": "Siguiente",
+                    "previous": "Anterior"
+                }
+            }
+        });
+    });
+
+    function confirmDelete(id){
+        Swal.fire({
+            title: 'Está seguro de eliminar el registro?',
+            text: "",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Eliminar',
+            cancelButtonText: 'Cancelar'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $("#mdProcesando").modal('show');
+
+                var endpoint = 'historico/delete/' + id
+                $.ajax({
+                    method: "GET",
+                    url: endpoint,
+                    success: function(data){
+                        $("#mdProcesando").modal('hide');
+                        Swal.fire(
+                            'Eliminado',
+                            'El registro se ha eliminado.',
+                            'success'
+                        )
+                        location.reload()
+                    },
+                    error: function(error_data){
+                        console.log("error")
+                    }
+                })
+            }
+        })
+    }
+
+{% endblock %}
+</script>
+
+{% block content %}
+
+{% load static %}
+
+<div class="card">
+    <div class="card-header">
+        <button class="btn btn-success" type="button" data-bs-toggle="modal" data-bs-target="#exampleModalLg">Importar</button>
+    </div>
+    <div class="card-body">
+        {% for message in messages %}
+            <div class="alert alert-danger" role="alert">
+                {{ message }}
+            </div>
+        {% endfor %}
+        <h4 class="card-title">Registro Histórico</h4>
+        <table id="tblRegistroHistorico" style="width:100%">
+            <thead>
+                <tr>
+                    <th>Año</th>
+                    <th>Periodo</th>
+                    <th>Sigla</th>
+                    <th>Modalidad</th>
+                    <th>Sede</th>
+                    <th>Escuela/Programa</th>
+                    <th>Estado</th>
+                    <th>Usuario</th>
+                    <th>Acción</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for registro in object_list %}
+                <tr>
+                    <td>{{ registro.anio }}</td>
+                    <td>{{ registro.periodo }}</td>
+                    <td>{{ registro.sigla }}</td>
+                    <td>{{ registro.modalidad }}</td>
+                    <td>{{ registro.sede.nombre }}</td>
+                    <td>{{ registro.escuela_programa_departamento.nombre }}</td>
+                    <td>{{ registro.estado }}</td>
+                    <td>{{ registro.usuario.username }}</td>
+                    <td>
+                        <button class="btn btn-danger" type="button" onclick="confirmDelete({{ registro.id }})">Borrar</button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+    </div>
+</div>
+
+<div class="modal fade" id="exampleModalLg" tabindex="-1" role="dialog" aria-labelledby="myLargeModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Importar Registro Histórico</h5>
+                <button class="btn-close" type="button" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form method="post" enctype="multipart/form-data" action="{% url 'historicoImport' %}">
+                    {% csrf_token %}
+                    <input type="file" name="xlsHistorico">
+                    <br><br>
+                    <input name="" id="" class="btn btn-success" type="submit" value="Cargar">
+                </form>
+            </div>
+            <div class="modal-footer"><button class="btn btn-primary" type="button" data-bs-dismiss="modal">Cerrar</button></div>
+        </div>
+    </div>
+</div>
+
+<div id="mdProcesando" class="modal fade" role="dialog" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-body" style="text-align: center">
+                <img src="{% static 'img/procesando.gif' %}" alt="User Avatar" width="80%">
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

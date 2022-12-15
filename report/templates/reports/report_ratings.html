@@ -1,0 +1,287 @@
+
+{% extends "base.html" %}
+
+{% block title %} Reporte Habilitaciones {% endblock %}
+
+<script>
+{% block jquery %}
+    var endpoint = '/rptHabilitaciones/data'
+    var labels
+    var datosA
+    var datosR
+    var datosPie
+    var porcentajeAprobados
+    var porcentajeReprobados
+    
+    $( "#btnExcel" ).click(function() {
+        descargarExcel()
+    });
+    $( "#btnPdf" ).click(function() {
+        descargarPDF()
+    });
+    $( "#btnBuscar" ).click(function() {
+        buscar()
+    });
+    function buscar(){
+        $.ajax({
+            method: "GET",
+            url: endpoint,
+            data: {
+                cmbPeriodo: $("#cmbPeriodo").val(),
+                cmbSede: $("#cmbSede").val(),
+                cmbEscuelaPrograma: $("#cmbEscuelaPrograma").val()
+            },
+            success: function(data){
+                labels = data.labels
+                datosA = data.datosA
+                datosR = data.datosR
+                datosPie = data.datosPie
+
+                porcentajeAprobados = datosPie[0]
+                porcentajeReprobados = datosPie[1]
+
+                $("#divParticipaciones").html('')
+                $("#divParticipaciones").append(data.participaciones)
+
+                $("#divDocentes").html('')
+                $("#divDocentes").append(data.docentes)
+
+                $("#divHoras").html('')
+                $("#divHoras").append(data.horas)
+
+                buildGraph()
+                $("#btnPdf").prop('hidden', false)
+                $("#btnExcel").prop('hidden', false)
+            },
+            error: function(error_data){
+                console.log("error")
+            }
+        })
+    }
+    
+
+    function buildGraph(){
+        //BARRA
+        var aprobadoData = {
+            label: 'Aprobado',
+            data: datosA,
+            backgroundColor: 'rgba(0, 99, 132, 0.6)',
+            borderColor: 'rgba(0, 99, 132, 1)',
+            maxBarThickness: 25
+        };
+        var reprobadoData = {
+            label: 'Reprobado',
+            data: datosR,
+            backgroundColor: 'rgba(99, 132, 0, 0.6)',
+            borderColor: 'rgba(99, 132, 0, 1)',
+            maxBarThickness: 25
+        };
+        var report = {
+            labels: labels,
+            datasets: [aprobadoData, reprobadoData]
+        };
+        var chartOptions = {
+            scales: {
+                xAxes: [{
+                    gridLines: {
+                        display: false,
+                        drawBorder: false
+                    }
+                }],
+                yAxes: [{
+                    ticks: {
+                        min: 0,
+                        stepSize: 1
+                    }
+                }]
+            }
+        };
+
+        
+        $('#myBarChart').remove();
+        $('#graph-bar').append('<canvas id="myBarChart" width="100%" height="15%"></canvas>');
+        var ctx = document.getElementById("myBarChart");
+        var myBarChart = new Chart(ctx, {
+            type: "bar",
+            data: report,
+            options: chartOptions
+        });
+
+        //TORTA
+        $('#myPieChart').remove();
+        $('#graph-pie').append('<canvas id="myPieChart" width="100%" height="15%"></canvas>');
+        var ctx2 = document.getElementById("myPieChart");
+        var myPieChart = new Chart(ctx2, {
+            type: "doughnut",
+            data: {
+                labels: ["Aprobado", "Reprobado"],
+                datasets: [{
+                    data: datosPie,
+                    backgroundColor: [
+                        "rgba(0, 99, 132, 0.6)",
+                        "rgba(99, 132, 0, 0.6)"
+                    ],
+                    hoverBackgroundColor: [
+                        "rgba(0, 99, 132, 1)",
+                        "rgba(99, 132, 0, 1)"
+                    ],
+                    hoverBorderColor: "rgba(234, 236, 244, 1)"
+                }]
+            },
+            options: {
+                maintainAspectRatio: false,
+                tooltips: {
+                    backgroundColor: "rgb(255,255,255)",
+                    bodyFontColor: "#858796",
+                    borderColor: "#dddfeb",
+                    borderWidth: 1,
+                    xPadding: 15,
+                    yPadding: 15,
+                    displayColors: false,
+                    caretPadding: 10
+                },
+                legend: {
+                    display: true
+                }
+            }
+        });
+    }
+
+    function descargarPDF() {
+        var canvasBar = document.querySelector('#myBarChart');
+        var canvasPie = document.querySelector('#myPieChart');
+        //creates image
+        var canvasImgBar = canvasBar.toDataURL();
+        var canvasImgPie = canvasPie.toDataURL();
+
+        var nombreBar = "Periodo: " + $("#cmbPeriodo option:selected").text() + " - Sede: " + $("#cmbSede option:selected").text() + " - Escuela/Programa: " + $("#cmbEscuelaPrograma option:selected").text();
+        var nombrePie = "Aprobados: " + porcentajeAprobados + "% - Reprobados: " + porcentajeReprobados + "%";
+        //creates PDF from img
+        var doc = new jsPDF('landscape');
+        doc.text(7, 15, nombreBar);
+        doc.addImage(canvasImgBar, 'JPEG', 10, 25, 280, 55);
+
+        doc.text(7, 90, nombrePie);
+        doc.addImage(canvasImgPie, 'JPEG', 5, 100, 297, 55);
+
+        doc.save('RptHabilitaciones.pdf');
+    }
+
+    function descargarExcel(){
+        var periodo = $("#cmbPeriodo").val();
+        var sede = $("#cmbSede").val();
+        var escuela = $("#cmbEscuelaPrograma").val();
+        var pageURL = $(location).attr("href");
+        pageURL = pageURL.split('rptHabilitaciones')[0]
+
+        var url= pageURL + "rptHabilitaciones/export/" + periodo +"/"+ sede +"/"+ escuela;
+        window.open(url, "Ver Documento");
+    }
+
+{% endblock %}
+</script>
+
+{% block content %}
+
+{% load static %}
+
+<div class="card">
+    <div class="card-header">
+        <label>Reporte Habilitaciones</label>
+    </div>
+    <div class="card-body">
+        <div class="col-md-12 row">
+            <div class="col-md-2">
+                <label>Período</label><select class="form-control" id="cmbPeriodo">
+                    {% for item in Periodo %}
+                        <option value="{{ item.periodo }}">{{ item.periodo }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Sede</label><select class="form-control" id="cmbSede">
+                    <option value="0">Todas</option>
+                    {% for item in Sede %}
+                        <option value="{{ item.codigo }}">{{ item.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label>Escuela/Programa</label><select class="form-control" id="cmbEscuelaPrograma">
+                    <option value="0">Todas</option>
+                    {% for item in Escuela %}
+                        <option value="{{ item.codigo }}">{{ item.nombre }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-2" style="padding-top: 1.5%">
+                <button class="btn btn-primary" type="button" id="btnBuscar">Buscar</button>
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<div class="card">
+    <div class="card-header">
+        <label>Datos</label>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary" type="button" id="btnExcel" hidden>Excel</button>
+        <p></p>
+        <div class="row">
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-lg border-start-secondary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <div class="small fw-bold text-secondary mb-1">Participaciones</div>
+                                <div class="h5" id="divParticipaciones">0</div>
+                            </div>
+                            <div class="ms-2"><i class="fas fa-tag fa-2x text-gray-200"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-lg border-start-secondary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <div class="small fw-bold text-secondary mb-1">Docentes (Rut)</div>
+                                <div class="h5" id="divDocentes">0</div>
+                            </div>
+                            <div class="ms-2"><i class="fas fa-tag fa-2x text-gray-200"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-xl-3 col-md-6 mb-4">
+                <div class="card border-start-lg border-start-secondary h-100">
+                    <div class="card-body">
+                        <div class="d-flex align-items-center">
+                            <div class="flex-grow-1">
+                                <div class="small fw-bold text-secondary mb-1">Horas</div>
+                                <div class="h5" id="divHoras">0</div>
+                            </div>
+                            <div class="ms-2"><i class="fas fa-tag fa-2x text-gray-200"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<br />
+<div class="card">
+    <div class="card-header">
+        <label>Gráficos</label>
+    </div>
+    <div class="card-body">
+        <button class="btn btn-primary" type="button" id="btnPdf" hidden>Pdf</button>
+        <div class="chart-bar" id="graph-bar"><canvas id="myBarChart" width="50%" height="15%"></canvas></div>
+        <br />
+        <div class="chart-pie" id="graph-pie"><canvas id="myPieChart" width="50%" height="15%"></canvas></div>
+    </div>
+</div>
+
+{% endblock %}

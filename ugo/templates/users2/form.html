@@ -1,0 +1,10 @@
+{% load crispy_forms_tags %}
+<form enctype="multipart/form-data" method="post" id="formUser">
+    {% csrf_token %}
+    {% crispy form %}
+    <br>
+    <a name="" id="" class="btn btn-default" href="{% url 'users' %}" role="button">Volver</a>
+    <input name="" id="" class="btn btn-success" type="submit" value="Guardar" form="formUser">
+
+
+</form>
